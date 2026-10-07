@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<!--
+  CORRELATION LAB — Single-file educational website
+  HOW TO RUN:
+  1. Save this file as correlation_lab.html
+  2. Open it in any modern browser (Chrome, Edge, Firefox, Safari).
+  3. Internet is not required for the simulations. Math is rendered with
+     plain HTML/CSS fallback notation so the page remains usable offline.
+  Keyboard: Space = play/pause, ←/→ = change active simulator lag.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Correlation Lab | Signals & Systems</title>
+<style>
+:root{
+  --bg:#07111d; --bg2:#0a1725; --card:#0e1d2c; --card2:#112538;
+  --line:#20384d; --text:#edf6f7; --muted:#9db0bc;
+  --teal:#36d6c4; --teal2:#8ff7eb; --amber:#f6b84b; --red:#ff6b75;
+  --blue:#68a9ff; --shadow:0 24px 70px rgba(0,0,0,.30);
+  --radius:20px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--text);background:
+  radial-gradient(circle at 15% 5%,rgba(54,214,196,.10),transparent 28%),
+  radial-gradient(circle at 85% 20%,rgba(246,184,75,.08),transparent 25%),var(--bg);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.55;
+}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.08;
+  background-image:linear-gradient(rgba(255,255,255,.25) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.25) 1px,transparent 1px);
+  background-size:50px 50px;
+}
+a{color:inherit}
+.container{width:min(1180px,92vw);margin:auto}
+nav{
+  position:fixed;z-index:100;top:0;left:0;right:0;height:70px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 4vw;
+  background:rgba(7,17,29,.84);backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(54,214,196,.12)
+}
+.brand{font-weight:900;letter-spacing:.08em;font-size:.92rem}
+.brand b{color:var(--teal)}
+.navlinks{display:flex;gap:20px}
+.navlinks a{text-decoration:none;color:var(--muted);font-size:.88rem}
+.navlinks a:hover{color:var(--teal2)}
+.mode{
+  border:1px solid #2a5361;background:#0d2631;color:var(--teal2);
+  padding:9px 13px;border-radius:10px;cursor:pointer;font-weight:750
+}
+section{padding:110px 0 70px;position:relative}
+.hero{min-height:100vh;display:grid;place-items:center;text-align:center;padding-top:140px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;
+  border:1px solid #2a4c58;background:#0b202b;color:var(--teal2);
+  text-transform:uppercase;letter-spacing:.13em;font-size:.72rem;font-weight:800
+}
+h1{font-size:clamp(3rem,7vw,6.8rem);line-height:.93;letter-spacing:-.06em;margin:25px 0 22px;max-width:1050px}
+h2{font-size:clamp(2rem,4vw,3.6rem);line-height:1;margin:12px 0 15px;letter-spacing:-.035em}
+h3{margin:0 0 8px;font-size:1.25rem}
+.gradient{background:linear-gradient(90deg,var(--teal),#eafffc,var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:780px;margin:auto;color:var(--muted);font-size:1.1rem}
+.btnrow{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+.btn{
+  border:1px solid #31586a;background:#102b36;color:#ecffff;border-radius:12px;
+  padding:12px 17px;text-decoration:none;font-weight:800;cursor:pointer
+}
+.btn.primary{background:linear-gradient(135deg,#178f88,#1f6d71);border-color:#39cabe}
+.btn.amber{background:#342814;border-color:#7a5b22;color:#ffe1a1}
+.sectionhead{margin-bottom:30px}
+.sectionhead p{max-width:760px;color:var(--muted)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{
+  background:linear-gradient(180deg,rgba(17,37,56,.96),rgba(10,25,39,.96));
+  border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)
+}
+.card p{color:var(--muted)}
+.num{font-size:.7rem;color:var(--teal);letter-spacing:.16em;font-weight:900}
+.formula{
+  margin:17px 0;padding:16px;border-radius:13px;background:#07131f;
+  border:1px solid #244153;font-family:Georgia,serif;font-size:1.28rem;color:#f7ffff
+}
+.tag{display:inline-block;margin:4px 5px 0 0;padding:5px 9px;border-radius:7px;background:#152d3d;color:#b9ced7;font-size:.72rem}
+.example{border-left:3px solid var(--amber);padding:12px 15px;background:#19180f;border-radius:0 10px 10px 0;color:#d8c7a4}
+.callout{
+  margin-top:22px;padding:17px 19px;border-radius:13px;background:#0c222b;
+  border:1px solid #25515b;color:#d8eeee
+}
+.simulator{
+  background:linear-gradient(180deg,#0b1928,#08131f);border:1px solid #254052;
+  border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-top:25px
+}
+.simhead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.simtitle{display:flex;gap:12px;align-items:center}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--teal);box-shadow:0 0 18px var(--teal)}
+.dot.amber{background:var(--amber);box-shadow:0 0 18px var(--amber)}
+.controls{
+  display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px;
+  margin:17px 0
+}
+.control{
+  padding:12px;background:#0d2030;border:1px solid #223e51;border-radius:12px
+}
+.control label{display:flex;justify-content:space-between;gap:8px;font-size:.76rem;color:#aec1ca;margin-bottom:7px}
+select,input[type=range]{
+  width:100%;accent-color:var(--teal);background:#091521;color:#eaf5f6
+}
+select{border:1px solid #2a4557;border-radius:8px;padding:8px}
+input[type=range]{cursor:pointer}
+.control b{color:var(--teal2)}
+.canvaswrap{display:grid;grid-template-columns:1fr;gap:10px}
+canvas{
+  display:block;width:100%;height:220px;border-radius:13px;background:#050d15;
+  border:1px solid #1c3445
+}
+.plotlabel{font-size:.74rem;color:#78909d;margin:2px 2px -3px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.actions button{
+  border:1px solid #2b4859;background:#102434;color:#e9f7f7;border-radius:9px;
+  padding:9px 13px;cursor:pointer;font-weight:750
+}
+.actions button:hover{border-color:#4c7c8e}
+.status{
+  margin-top:14px;padding:13px 15px;border-radius:11px;background:#0a1b28;
+  color:#bdd0d6;border:1px solid #1e3a4a;font-size:.9rem
+}
+.status strong{color:#fff}
+.peak{
+  display:inline-flex;gap:8px;align-items:center;padding:5px 9px;border-radius:8px;
+  background:#192b22;color:#a9f2ce;font-weight:800
+}
+.comparison{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.comparebox{padding:22px;border-radius:18px;border:1px solid var(--line);background:#0b1927}
+.comparebox.auto{border-top:3px solid var(--teal)}
+.comparebox.cross{border-top:3px solid var(--amber)}
+table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:15px;background:#0b1927}
+th,td{padding:15px 14px;border-bottom:1px solid #203546;text-align:left}
+th{background:#102436;color:#c8dce2;font-size:.84rem}
+td{color:#aebfc7;font-size:.9rem}
+td:first-child{color:#e9f5f5;font-weight:800}
+.badgeauto{color:var(--teal2)}.badgecross{color:#ffd58a}
+.interpret{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.tip{padding:19px;border:1px solid var(--line);background:#0d1d2c;border-radius:15px}
+.tip .icon{font-size:1.6rem}
+.tip p{color:var(--muted);font-size:.88rem}
+footer{padding:40px 0;border-top:1px solid #183040;color:#708591;text-align:center}
+.presentation .controls,.presentation .actions,.presentation .navlinks,.presentation .educational-only{display:none!important}
+.presentation section{padding-top:90px}
+.presentation .simulator{padding:25px}
+.presentation canvas{height:300px}
+.presentation .simulator{min-height:78vh;display:flex;flex-direction:column;justify-content:center}
+.help{
+  display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  border:1px solid #52717d;color:#a9c0c7;font-size:.68rem;cursor:help
+}
+.reveal{animation:rise .7s both}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media(max-width:900px){
+ .grid3,.comparison,.interpret{grid-template-columns:1fr}
+ .controls{grid-template-columns:1fr 1fr}
+ .navlinks{display:none}
+}
+@media(max-width:600px){
+ nav{height:60px}.mode{font-size:.75rem}
+ section{padding:90px 0 50px}.hero{padding-top:100px}
+ .controls{grid-template-columns:1fr}
+ canvas{height:190px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">SIGNALS<span>•</span>LAB <b>/ CORRELATION</b></div>
+  <div class="navlinks">
+    <a href="#learn">Learn</a><a href="#auto">Autocorrelation</a>
+    <a href="#cross">Cross-correlation</a><a href="#compare">Differences</a><a href="#interpret">Interpret</a>
+  </div>
+  <button class="mode" id="modeBtn">◫ Presentation Mode</button>
+</nav>
+
+<main>
+<section class="hero">
+  <div class="container">
+    <div class="eyebrow reveal">Signals & Systems • Interactive Learning</div>
+    <h1 class="reveal">Understanding <span class="gradient">Correlation</span>,<br>Autocorrelation & Cross-correlation</h1>
+    <p class="lead reveal">A visual mini-lecture where signals move like a real oscilloscope, correlation is calculated live, and the key difference becomes easy to see.</p>
+    <div class="btnrow reveal">
+      <a class="btn primary" href="#learn">Start learning ↓</a>
+      <a class="btn amber" href="#auto">Jump to simulation</a>
+    </div>
+    <div class="callout reveal" style="max-width:760px;margin:35px auto 0">
+      <b>The one question:</b> How similar are two sequences? &nbsp;→&nbsp;
+      <b>Auto</b> asks “me vs me”; <b>Cross</b> asks “me vs another”.
+    </div>
+  </div>
+</section>
+
+<section id="learn">
+<div class="container">
+  <div class="sectionhead">
+    <div class="eyebrow">01 • Educational background</div>
+    <h2>Start with the <span class="gradient">common idea</span></h2>
+    <p>Correlation is a family of ways to quantify how strongly data or signals are related. The exact meaning depends on what is being compared and whether time/lag is involved.</p>
+  </div>
+  <div class="grid3">
+    <article class="card">
+      <div class="num">SIGNAL VS ITSELF</div><h3>Autocorrelation</h3>
+      <p>Autocorrelation compares a signal with a delayed copy of <b>the same signal</b>.</p>
+      <div class="formula">Rₓₓ[k] = Σ x[n] · x[n−k]</div>
+      <p>The result is a function of lag <b>k</b>. Repeated peaks can reveal periodic structure.</p>
+      <div class="example">Example: estimating the pitch/periodicity of an audio waveform.</div>
+    </article>
+    <article class="card">
+      <div class="num">SIGNAL VS ANOTHER</div><h3>Cross-correlation</h3>
+      <p>Cross-correlation compares one signal with a shifted version of <b>another signal</b>.</p>
+      <div class="formula">Rₓᵧ[k] = Σ x[n] · y[n−k]</div>
+      <p>A strong peak can indicate the relative alignment or delay between the signals.</p>
+      <div class="example">Example: comparing a transmitted radar pulse with its received echo.</div>
+    </article>
+  </div>
+  <div class="callout"><b>Important:</b> In signal processing, autocorrelation and cross-correlation are both functions of lag. “Correlation” in statistics often refers to a normalized, same-time linear relationship instead.</div>
+</div>
+</section>
+
+<section id="auto">
+<div class="container">
+  <div class="sectionhead">
+    <div class="eyebrow">02 • Live simulation</div>
+    <h2><span class="badgeauto">Autocorrelation</span>: find repetition</h2>
+    <p>Watch one signal and a delayed copy scroll continuously. The lower plot calculates how similar the signal is to itself at every lag.</p>
+  </div>
+  <div class="simulator" id="autoSim">
+    <div class="simhead">
+      <div class="simtitle"><span class="dot"></span><div><h3>Autocorrelation simulator <span class="help" title="Same waveform compared with shifted copies of itself.">?</span></h3><small style="color:var(--muted)">Same signal → shifted copy → self-similarity</small></div></div>
+      <div class="peak">Peak: <span id="autoPeak">0.00</span> @ <span id="autoPeakLag">0</span> samples</div>
+    </div>
+    <div class="controls">
+      <div class="control"><label>Signal type <b id="autoTypeLabel">Sine</b></label><select id="autoType"><option>Sine</option><option>Square</option><option>Sawtooth</option><option>Noisy Sine</option><option>Random Noise</option></select></div>
+      <div class="control"><label>Lag <b id="autoLagLabel">0</b></label><input id="autoLag" type="range" min="-60" max="60" value="0"></div>
+      <div class="control"><label>Frequency <b id="autoFreqLabel">2.0 Hz</b></label><input id="autoFreq" type="range" min="0.5" max="6" step=".1" value="2"></div>
+      <div class="control"><label>Noise <b id="autoNoiseLabel">0%</b></label><input id="autoNoise" type="range" min="0" max="1" step=".01" value="0"></div>
+    </div>
+    <div class="canvaswrap">
+      <div class="plotlabel">LIVE WAVEFORMS — teal = original • amber = delayed copy</div>
+      <canvas id="autoWave" aria-label="Autocorrelation live waveforms"></canvas>
+      <div class="plotlabel">AUTOCORRELATION Rₓₓ[k] — normalized similarity versus lag</div>
+      <canvas id="autoCorr" aria-label="Autocorrelation plot"></canvas>
+    </div>
+    <div class="actions"><button id="autoPlay">❚❚ Pause</button><button id="autoReset">↺ Reset</button></div>
+    <div class="status" id="autoStatus"></div>
+  </div>
+</div>
+</section>
+
+<section id="cross">
+<div class="container">
+  <div class="sectionhead">
+    <div class="eyebrow">03 • Live simulation</div>
+    <h2><span class="badgecross">Cross-correlation</span>: find alignment</h2>
+    <p>Now the signals are different. Change their frequencies, phases, noise and delay. The correlation peak moves to reveal the best alignment.</p>
+  </div>
+  <div class="simulator" id="crossSim">
+    <div class="simhead">
+      <div class="simtitle"><span class="dot amber"></span><div><h3>Cross-correlation simulator <span class="help" title="Different signals are compared while one is shifted.">?</span></h3><small style="color:var(--muted)">Signal X → compare with shifted Signal Y</small></div></div>
+      <div class="peak">Best match: <span id="crossPeak">0.00</span> @ <span id="crossPeakLag">0</span> samples</div>
+    </div>
+    <div class="controls">
+      <div class="control"><label>X frequency <b id="xFreqLabel">2.0 Hz</b></label><input id="xFreq" type="range" min=".5" max="6" step=".1" value="2"></div>
+      <div class="control"><label>X phase <b id="xPhaseLabel">0°</b></label><input id="xPhase" type="range" min="-180" max="180" value="0"></div>
+      <div class="control"><label>X noise <b id="xNoiseLabel">0%</b></label><input id="xNoise" type="range" min="0" max="1" step=".01" value="0"></div>
+      <div class="control"><label>Y frequency <b id="yFreqLabel">2.0 Hz</b></label><input id="yFreq" type="range" min=".5" max="6" step=".1" value="2"></div>
+      <div class="control"><label>Y phase <b id="yPhaseLabel">35°</b></label><input id="yPhase" type="range" min="-180" max="180" value="35"></div>
+      <div class="control"><label>Y noise <b id="yNoiseLabel">0%</b></label><input id="yNoise" type="range" min="0" max="1" step=".01" value="0"></div>
+      <div class="control"><label>Physical delay <b id="delayLabel">+12</b></label><input id="crossDelay" type="range" min="-50" max="50" value="12"></div>
+      <div class="control"><label>Lag being inspected <b id="crossLagLabel">0</b></label><input id="crossLag" type="range" min="-60" max="60" value="0"></div>
+    </div>
+    <div class="canvaswrap">
+      <div class="plotlabel">LIVE WAVEFORMS — teal = X • amber = Y</div>
+      <canvas id="crossWave" aria-label="Cross-correlation live waveforms"></canvas>
+      <div class="plotlabel">CROSS-CORRELATION Rₓᵧ[k] — normalized similarity versus lag</div>
+      <canvas id="crossCorr" aria-label="Cross-correlation plot"></canvas>
+    </div>
+    <div class="actions"><button id="crossPlay">❚❚ Pause</button><button id="crossReset">↺ Reset</button></div>
+    <div class="status" id="crossStatus"></div>
+  </div>
+</div>
+</section>
+
+<section id="compare">
+ <div class="container">
+   <div class="sectionhead">
+     <div class="eyebrow">04 • The core difference</div>
+     <h2>Difference Between <span class="gradient">Autocorrelation and Cross-Correlation</span></h2>
+     <p>The central difference is what is being compared and what information the correlation peak reveals.</p>
+   </div>
+
+   <div class="comparison" style="grid-template-columns:1fr 1fr;gap:22px">
+     <div class="comparebox auto" style="padding:30px;min-height:430px">
+       <div class="num">AUTOCORRELATION</div>
+       <h3 style="font-size:2rem;margin-top:8px">Rₓₓ[k]</h3>
+       <div class="formula">SAME SIGNAL → SHIFT → COMPARE</div>
+       <div class="grid3" style="grid-template-columns:1fr;gap:10px">
+         <div class="tip"><b>Signals used</b><p>One signal only.</p></div>
+         <div class="tip"><b>Comparison</b><p>The signal is compared with a delayed version of itself.</p></div>
+         <div class="tip"><b>Main purpose</b><p>Find repetition, periodicity and self-similarity.</p></div>
+         <div class="tip"><b>Peak meaning</b><p>Zero-lag gives the strongest self-match; repeated peaks reveal periodic structure.</p></div>
+         <div class="tip"><b>Typical applications</b><p>Pitch detection, vibration analysis and repeating-pattern detection.</p></div>
+       </div>
+     </div>
+
+     <div class="comparebox cross" style="padding:30px;min-height:430px">
+       <div class="num">CROSS-CORRELATION</div>
+       <h3 style="font-size:2rem;margin-top:8px">Rₓᵧ[k]</h3>
+       <div class="formula">SIGNAL X → SHIFT SIGNAL Y → COMPARE</div>
+       <div class="grid3" style="grid-template-columns:1fr;gap:10px">
+         <div class="tip"><b>Signals used</b><p>Two different signals.</p></div>
+         <div class="tip"><b>Comparison</b><p>One signal is compared with a shifted version of another signal.</p></div>
+         <div class="tip"><b>Main purpose</b><p>Find similarity and relative time delay.</p></div>
+         <div class="tip"><b>Peak meaning</b><p>The peak position shows the lag where the two signals align best.</p></div>
+         <div class="tip"><b>Typical applications</b><p>Radar, synchronization, signal alignment and pattern matching.</p></div>
+       </div>
+     </div>
+   </div>
+
+   <div class="card" style="margin-top:25px;padding:28px">
+     <h3 style="font-size:1.5rem;margin-bottom:18px">Direct Comparison</h3>
+     <table>
+       <thead>
+         <tr><th>Feature</th><th>Autocorrelation</th><th>Cross-Correlation</th></tr>
+       </thead>
+       <tbody>
+         <tr><td>Signals used</td><td class="badgeauto">Same signal</td><td class="badgecross">Two different signals</td></tr>
+         <tr><td>Formula</td><td>Rₓₓ[k] = Σ x[n] · x[n−k]</td><td>Rₓᵧ[k] = Σ x[n] · y[n−k]</td></tr>
+         <tr><td>Lag</td><td>Varies with k / τ</td><td>Varies with k / τ</td></tr>
+         <tr><td>Main purpose</td><td>Self-similarity and periodicity</td><td>Similarity and relative delay</td></tr>
+         <tr><td>Peak position</td><td>Shows repeated self-matches</td><td>Shows best alignment between the two signals</td></tr>
+         <tr><td>Typical use</td><td>Pitch, periodicity, vibration patterns</td><td>Radar, synchronization, delay estimation</td></tr>
+       </tbody>
+     </table>
+   </div>
+ </div>
+</section>
+
+<section id="interpret">
+<div class="container">
+  <div class="sectionhead">
+    <div class="eyebrow">05 • How to read the plots</div>
+    <h2>Interpret the <span class="gradient">correlation curve</span></h2>
+    <p>Do not just look for a line. Ask what the peak, its position and its width are telling you.</p>
+  </div>
+  <div class="interpret">
+    <div class="tip"><div class="icon">⬆</div><h3>Peak height</h3><p>A higher normalized peak means a stronger match at that lag.</p></div>
+    <div class="tip"><div class="icon">↔</div><h3>Peak position</h3><p>The lag where the maximum occurs indicates the relative alignment or delay.</p></div>
+    <div class="tip"><div class="icon">⌁</div><h3>Peak width</h3><p>A narrow peak often indicates a precise timing match; a broad peak means many nearby lags give similar matches.</p></div>
+    <div class="tip"><div class="icon">↻</div><h3>Repeated peaks</h3><p>Regularly spaced peaks are a visual clue that the signal contains periodic structure.</p></div>
+  </div>
+  <div class="callout"><b>Presentation tip:</b> Move the lag sliders during your explanation. First show autocorrelation at zero lag, then move away from zero. Next introduce a delayed second signal and show how cross-correlation finds the alignment.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+  <div class="card" style="text-align:center;padding:42px">
+    <div class="eyebrow">Final takeaway</div>
+    <h2 style="margin-top:22px">Remember just <span class="gradient">two words</span></h2>
+    <p style="font-size:1.2rem;max-width:700px;margin:18px auto;color:#d2e1e5">
+      <b style="color:var(--teal2)">AUTO = SAME</b> signal → discover repetition.<br>
+      <b style="color:#ffd58a">CROSS = DIFFERENT</b> signals → discover alignment / delay.
+    </p>
+    <a class="btn primary" href="#auto">Run the experiment again ↑</a>
+  </div>
+</div>
+</section>
+</main>
+
+<footer>Correlation Lab • Signals & Systems • Built as a single HTML educational presentation</footer>
+
+<script>
+/* ============================================================
+   CORRELATION LAB ENGINE
+   Robust Canvas implementation:
+   - Canvas dimensions are explicitly synchronized before drawing.
+   - requestAnimationFrame continuously advances signal phase.
+   - Correlation is recalculated from the visible signal samples.
+   ============================================================ */
+
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+
+let activeSimulator = "auto";
+
+const auto = {
+  type:"Sine", lag:0, freq:2, noise:0, t:0, playing:true,
+  N:220, sampleRate:100, maxLag:50
+};
+
+const cross = {
+  xf:2, xp:0, xn:0, yf:2, yp:35, yn:0, delay:12, lag:0, t:0,
+  N:220, sampleRate:100, maxLag:50, playing:true
+};
+
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+function seededNoise(i,seed){
+  const x = Math.sin((i + seed * 0.17) * 12.9898) * 43758.5453;
+  return (x - Math.floor(x))*2 - 1;
+}
+
+function waveform(type, phase, freq, time, noiseAmt, index){
+  const a = TAU * freq * time + phase;
+  let v;
+
+  switch(type){
+    case "Square":
+      v = Math.sin(a) >= 0 ? 1 : -1;
+      break;
+    case "Sawtooth":
+      v = 2 * ((freq * time) - Math.floor(freq * time)) - 1;
+      break;
+    case "Random Noise":
+      v = seededNoise(index, Math.floor(time * 12));
+      break;
+    case "Noisy Sine":
+      v = Math.sin(a);
+      break;
+    default:
+      v = Math.sin(a);
+  }
+
+  if(type !== "Random Noise"){
+    v += seededNoise(index, Math.floor(time * 20)) * noiseAmt * 0.75;
+  }else{
+    v *= (0.55 + noiseAmt * 0.8);
+  }
+
+  return clamp(v,-1.5,1.5);
+}
+
+function makeAutoSignal(){
+  const a = [];
+  for(let i=0;i<auto.N;i++){
+    const time = auto.t + (i-auto.N) / auto.sampleRate;
+    a.push(waveform(auto.type,0,auto.freq,time,auto.noise,i));
+  }
+  return a;
+}
+
+function makeCrossSignals(){
+  const x=[],y=[];
+  for(let i=0;i<cross.N;i++){
+    const time = cross.t + (i-cross.N) / cross.sampleRate;
+    x.push(waveform("Sine",cross.xp*Math.PI/180,cross.xf,time,cross.xn,i));
+    y.push(waveform("Sine",cross.yp*Math.PI/180,cross.yf,
+      time-cross.delay/cross.sampleRate,cross.yn,i+97));
+  }
+  return {x,y};
+}
+
+function normalize(a){
+  let mean=0;
+  for(const v of a) mean+=v;
+  mean/=a.length;
+  const z=new Array(a.length);
+  let e=0;
+  for(let i=0;i<a.length;i++){
+    z[i]=a[i]-mean;
+    e+=z[i]*z[i];
+  }
+  return {z,e};
+}
+
+function corrAt(a,b,lag){
+  const A=normalize(a),B=normalize(b);
+  let sum=0,aa=0,bb=0,n=0;
+
+  for(let i=0;i<a.length;i++){
+    const j=i-lag;
+    if(j<0 || j>=b.length) continue;
+    sum += A.z[i]*B.z[j];
+    aa += A.z[i]*A.z[i];
+    bb += B.z[j]*B.z[j];
+    n++;
+  }
+
+  if(n<5 || aa===0 || bb===0) return 0;
+  return sum/Math.sqrt(aa*bb);
+}
+
+function correlationCurve(a,b,maxLag){
+  const out=[];
+  for(let k=-maxLag;k<=maxLag;k++) out.push(corrAt(a,b,k));
+  return out;
+}
+
+function bestPeak(values,maxLag){
+  let index=0;
+  for(let i=1;i<values.length;i++){
+    if(values[i]>values[index]) index=i;
+  }
+  return {
+    value:values[index],
+    lag:index-maxLag
+  };
+}
+
+/* Canvas setup — explicitly sets backing resolution. */
+function canvasContext(canvas){
+  const rect=canvas.getBoundingClientRect();
+  const w=Math.max(320,Math.floor(rect.width || canvas.parentElement.clientWidth || 700));
+  const h=Math.max(160,Math.floor(rect.height || 220));
+  const dpr=Math.min(window.devicePixelRatio || 1,2);
+
+  if(canvas.width !== Math.floor(w*dpr) || canvas.height !== Math.floor(h*dpr)){
+    canvas.width=Math.floor(w*dpr);
+    canvas.height=Math.floor(h*dpr);
+  }
+
+  const ctx=canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+
+function background(ctx,w,h){
+  ctx.fillStyle="#050d15";
+  ctx.fillRect(0,0,w,h);
+
+  ctx.strokeStyle="rgba(105,155,175,.13)";
+  ctx.lineWidth=1;
+
+  for(let i=1;i<10;i++){
+    const x=i*w/10;
+    ctx.beginPath();
+    ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
+  }
+
+  for(let i=1;i<5;i++){
+    const y=i*h/5;
+    ctx.beginPath();
+    ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+
+  ctx.strokeStyle="rgba(180,205,215,.28)";
+  ctx.beginPath();
+  ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();
+}
+
+function drawLine(ctx,data,w,h,color,lineWidth=2.5){
+  ctx.beginPath();
+  ctx.strokeStyle=color;
+  ctx.lineWidth=lineWidth;
+
+  for(let i=0;i<data.length;i++){
+    const x=i*(w/(data.length-1));
+    const y=h/2-data[i]*(h*.30);
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+function drawWaveCanvas(canvas,first,firstColor,second,secondColor){
+  const {ctx,w,h}=canvasContext(canvas);
+  background(ctx,w,h);
+
+  drawLine(ctx,first,w,h,firstColor,2.8);
+  if(second) drawLine(ctx,second,w,h,secondColor,2.4);
+
+  ctx.font="12px system-ui";
+  ctx.fillStyle="#8ca5b0";
+  ctx.fillText("amplitude",10,16);
+  ctx.fillText("time →",w-52,h-9);
+}
+
+function drawCorrelationCanvas(canvas,values,maxLag,selectedLag,color,title){
+  const {ctx,w,h}=canvasContext(canvas);
+  background(ctx,w,h);
+
+  const pad=12;
+  const x=i=>pad+i*(w-2*pad)/(values.length-1);
+  const y=v=>h/2-v*(h*.35);
+
+  ctx.beginPath();
+  ctx.strokeStyle=color;
+  ctx.lineWidth=2.7;
+
+  for(let i=0;i<values.length;i++){
+    if(i===0) ctx.moveTo(x(i),y(values[i]));
+    else ctx.lineTo(x(i),y(values[i]));
+  }
+  ctx.stroke();
+
+  const zero=maxLag;
+  ctx.strokeStyle="rgba(255,255,255,.28)";
+  ctx.setLineDash([5,5]);
+  ctx.beginPath();
+  ctx.moveTo(x(zero),0);ctx.lineTo(x(zero),h);ctx.stroke();
+  ctx.setLineDash([]);
+
+  const selectedIndex=selectedLag+maxLag;
+  if(selectedIndex>=0 && selectedIndex<values.length){
+    ctx.strokeStyle="rgba(255,255,255,.65)";
+    ctx.setLineDash([3,4]);
+    ctx.beginPath();
+    ctx.moveTo(x(selectedIndex),0);
+    ctx.lineTo(x(selectedIndex),h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle="#ffffff";
+    ctx.beginPath();
+    ctx.arc(x(selectedIndex),y(values[selectedIndex]),5,0,TAU);
+    ctx.fill();
+  }
+
+  const peak=bestPeak(values,maxLag);
+  const peakIndex=peak.lag+maxLag;
+
+  ctx.fillStyle="#f6b84b";
+  ctx.beginPath();
+  ctx.arc(x(peakIndex),y(peak.value),5,0,TAU);
+  ctx.fill();
+
+  ctx.font="12px system-ui";
+  ctx.fillStyle="#8ca5b0";
+  ctx.fillText(title,10,16);
+  ctx.fillText("-lag",10,h-9);
+  ctx.fillText("+lag",w-38,h-9);
+
+  return peak;
+}
+
+/* AUTOCORRELATION */
+function updateAutoLabels(){
+  $("autoTypeLabel").textContent=auto.type;
+  $("autoLagLabel").textContent=auto.lag;
+  $("autoFreqLabel").textContent=auto.freq.toFixed(1)+" Hz";
+  $("autoNoiseLabel").textContent=Math.round(auto.noise*100)+"%";
+}
+
+function renderAuto(){
+  updateAutoLabels();
+
+  const signal=makeAutoSignal();
+
+  /* Delayed visual copy. */
+  const delayed=signal.map((_,i)=>{
+    const source=i-auto.lag;
+    return signal[clamp(source,0,signal.length-1)];
+  });
+
+  drawWaveCanvas(
+    $("autoWave"),
+    signal,"#36d6c4",
+    delayed,"#f6b84b"
+  );
+
+  const curve=correlationCurve(signal,signal,auto.maxLag);
+
+  const peak=drawCorrelationCanvas(
+    $("autoCorr"),curve,auto.maxLag,auto.lag,
+    "#36d6c4","Rₓₓ[k]  •  normalized autocorrelation"
+  );
+
+  const selected=curve[auto.lag+auto.maxLag] || 0;
+
+  $("autoPeak").textContent=peak.value.toFixed(2);
+  $("autoPeakLag").textContent=peak.lag;
+
+  if(auto.lag===0){
+    $("autoStatus").innerHTML=
+      `At <strong>lag = 0</strong>, the signal is compared with itself.
+       The overlap is perfect, so the normalized autocorrelation is
+       <strong>1.00</strong>.`;
+  }else{
+    $("autoStatus").innerHTML=
+      `At <strong>lag = ${auto.lag} samples</strong>, the selected self-match is
+       <strong>${selected.toFixed(2)}</strong>. For periodic signals,
+       repeated peaks appear when the shifted waveform lines up with an earlier cycle.
+       The strongest peak is near <strong>${peak.lag}</strong>.`;
+  }
+}
+
+$("autoType").onchange=e=>{
+  activeSimulator="auto";
+  auto.type=e.target.value;
+  renderAuto();
+};
+$("autoLag").oninput=e=>{
+  activeSimulator="auto";
+  auto.lag=+e.target.value;
+  renderAuto();
+};
+$("autoFreq").oninput=e=>{
+  auto.freq=+e.target.value;
+  renderAuto();
+};
+$("autoNoise").oninput=e=>{
+  auto.noise=+e.target.value;
+  renderAuto();
+};
+
+$("autoPlay").onclick=()=>{
+  auto.playing=!auto.playing;
+  $("autoPlay").textContent=auto.playing?"❚❚ Pause":"▶ Play";
+};
+
+$("autoReset").onclick=()=>{
+  Object.assign(auto,{type:"Sine",lag:0,freq:2,noise:0,t:0,playing:true});
+  $("autoType").value="Sine";
+  $("autoLag").value=0;
+  $("autoFreq").value=2;
+  $("autoNoise").value=0;
+  $("autoPlay").textContent="❚❚ Pause";
+  renderAuto();
+};
+
+/* CROSS-CORRELATION */
+function updateCrossLabels(){
+  $("xFreqLabel").textContent=cross.xf.toFixed(1)+" Hz";
+  $("xPhaseLabel").textContent=Math.round(cross.xp)+"°";
+  $("xNoiseLabel").textContent=Math.round(cross.xn*100)+"%";
+  $("yFreqLabel").textContent=cross.yf.toFixed(1)+" Hz";
+  $("yPhaseLabel").textContent=Math.round(cross.yp)+"°";
+  $("yNoiseLabel").textContent=Math.round(cross.yn*100)+"%";
+  $("delayLabel").textContent=(cross.delay>=0?"+":"")+Math.round(cross.delay);
+  $("crossLagLabel").textContent=cross.lag;
+}
+
+function renderCross(){
+  updateCrossLabels();
+
+  const pair=makeCrossSignals();
+
+  drawWaveCanvas(
+    $("crossWave"),
+    pair.x,"#36d6c4",
+    pair.y,"#f6b84b"
+  );
+
+  const curve=correlationCurve(pair.x,pair.y,cross.maxLag);
+
+  const peak=drawCorrelationCanvas(
+    $("crossCorr"),curve,cross.maxLag,cross.lag,
+    "#f6b84b","Rₓᵧ[k]  •  normalized cross-correlation"
+  );
+
+  $("crossPeak").textContent=peak.value.toFixed(2);
+  $("crossPeakLag").textContent=peak.lag;
+
+  $("crossStatus").innerHTML=
+    `Two different signals are being compared.
+     The strongest match is <strong>${peak.value.toFixed(2)}</strong>
+     at approximately <strong>lag ${peak.lag}</strong>.
+     The physical delay control changes where this best-match peak appears.`;
+}
+
+const crossMap={
+  xFreq:"xf",xPhase:"xp",xNoise:"xn",
+  yFreq:"yf",yPhase:"yp",yNoise:"yn",
+  crossDelay:"delay",crossLag:"lag"
+};
+
+Object.keys(crossMap).forEach(id=>{
+  $(id).oninput=e=>{
+    activeSimulator="cross";
+    cross[crossMap[id]]=+e.target.value;
+    renderCross();
+  };
+});
+
+$("crossPlay").onclick=()=>{
+  cross.playing=!cross.playing;
+  $("crossPlay").textContent=cross.playing?"❚❚ Pause":"▶ Play";
+};
+
+$("crossReset").onclick=()=>{
+  Object.assign(cross,{
+    xf:2,xp:0,xn:0,
+    yf:2,yp:35,yn:0,
+    delay:12,lag:0,t:0,playing:true
+  });
+
+  const values={
+    xFreq:2,xPhase:0,xNoise:0,
+    yFreq:2,yPhase:35,yNoise:0,
+    crossDelay:12,crossLag:0
+  };
+
+  Object.keys(values).forEach(id=>$(id).value=values[id]);
+  $("crossPlay").textContent="❚❚ Pause";
+  renderCross();
+};
+
+/* PRESENTATION MODE */
+$("modeBtn").onclick=()=>{
+  document.body.classList.toggle("presentation");
+  $("modeBtn").textContent=
+    document.body.classList.contains("presentation")
+    ?"× Exit Presentation":"◫ Presentation Mode";
+};
+
+/* KEYBOARD */
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT" || e.target.tagName==="SELECT") return;
+
+  if(e.code==="Space"){
+    e.preventDefault();
+    if(activeSimulator==="auto") $("autoPlay").click();
+    else $("crossPlay").click();
+  }
+
+  if(e.key==="ArrowLeft" || e.key==="ArrowRight"){
+    e.preventDefault();
+
+    const id=activeSimulator==="auto"?"autoLag":"crossLag";
+    const el=$(id);
+    const step=e.key==="ArrowRight"?1:-1;
+
+    el.value=clamp(+el.value+step,+el.min,+el.max);
+    el.dispatchEvent(new Event("input"));
+  }
+});
+
+/* Continuous animation. The time term advances every frame, so the
+   waveform visibly scrolls instead of remaining static. */
+let previous=performance.now();
+
+function animate(now){
+  const dt=Math.min((now-previous)/1000,.05);
+  previous=now;
+
+  if(auto.playing) auto.t += dt;
+  if(cross.playing) cross.t += dt;
+
+  renderAuto();
+  renderCross();
+
+  requestAnimationFrame(animate);
+}
+
+/* First frame is drawn before animation starts. */
+renderAuto();
+renderCross();
+requestAnimationFrame(animate);
+
+window.addEventListener("resize",()=>{
+  renderAuto();
+  renderCross();
+});
+
+</script>
+</body>
+</html>
